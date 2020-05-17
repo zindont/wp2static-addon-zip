@@ -4,43 +4,53 @@
 <table class="widefat striped">
     <thead>
         <tr>
+            <th>Filename</th>
             <th>Zip Size</th>
             <th>Created</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>
-                <?php if ( $view['zip_path'] ) : ?>
-                    <?php echo $view['zip_size']; ?>
-                <?php else: ?>
-                    No ZIP found.
-                <?php endif; ?>
-            </td>
-            <td>
-                <?php if ( $view['zip_path'] ) : ?>
-                    <?php echo $view['zip_created']; ?>
-                <?php endif; ?>
-            </td>
-            <td>
-                <?php if ( $view['zip_path'] ) : ?>
-                    <a style="float:left;margin-right:10px;" href="<?php echo $view['zip_url']; ?>"><button class="button btn-danger">Download ZIP</button></a>
+        <?php foreach ($view['zips'] as $key => $zip) : ?>
+            <tr>
+                <td>
+                    <?php if ( $zip['zip_path'] ) : ?>
+                        <?php echo $zip['fileName']; ?>
+                    <?php endif; ?>
+                </td>            
+                <td>
+                    <?php if ( $zip['zip_path'] ) : ?>
+                        <?php echo $zip['zip_size']; ?>
+                    <?php else: ?>
+                        No ZIP found.
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <?php if ( $zip['zip_path'] ) : ?>
+                        <?php echo $zip['zip_created']; ?>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <?php if ( $zip['zip_path'] ) : ?>
+                        <a style="float:left;margin-right:10px;" href="<?php echo $zip['zip_url']; ?>"><button class="button btn-danger">Download ZIP</button></a>
 
-<form
-    name="wp2static-zip-delete"
-    method="POST"
-    action="<?php echo esc_url( admin_url('admin-post.php') ); ?>">
+                        <form
+                            name="wp2static-zip-delete"
+                            method="POST"
+                            action="<?php echo esc_url( admin_url('admin-post.php') ); ?>">
 
-    <?php wp_nonce_field( $view['nonce_action'] ); ?>
-    <input name="action" type="hidden" value="wp2static_zip_delete" />
+                            <?php wp_nonce_field( $view['nonce_action'] ); ?>
+                            <input name="action" type="hidden" value="wp2static_zip_delete" />
 
-    <button class="button btn-danger">Delete ZIP</button>
-</form>
-                <?php endif; ?>
+                            <button class="button btn-danger">Delete ZIP</button>
+                        </form>
+                    <?php endif; ?>
 
-            </td>
-        </tr>
+                </td>
+            </tr>
+
+            <?php endforeach; ?>
+        
     </tbody>
 </table>
 

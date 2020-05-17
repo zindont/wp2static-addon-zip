@@ -4,6 +4,11 @@ namespace WP2StaticZip;
 
 class Controller {
     public function run() : void {
+        add_filter(
+            'wp2static_add_menu_items',
+            [ 'WP2StaticZip\Controller', 'addSubmenuPage' ]
+        );
+
         add_action(
             'admin_post_wp2static_zip_delete',
             [ $this, 'deleteZip' ],
@@ -14,13 +19,6 @@ class Controller {
         add_action(
             'wp2static_deploy',
             [ $this, 'generateZip' ],
-            15,
-            2
-        );
-
-        add_action(
-            'admin_menu',
-            [ $this, 'addOptionsPage' ],
             15,
             1
         );
@@ -48,6 +46,42 @@ class Controller {
         $view = [];
         $view['nonce_action'] = 'wp2static-zip-delete';
         $view['uploads_path'] = \WP2Static\SiteInfo::getPath( 'uploads' );
+        $view['zips'] = [];
+        
+        $zips = scandir(\WP2Static\SiteInfo::getPath( 'uploads' ));
+        $zips = array_filter($zips, function($zipItem){
+            if ( strpos($zipItem, 'wp2static-processed-site') !== FALSE && strpos($zipItem, '.zip') !== FALSE ) {
+                return $zipItem;
+            }
+            
+        });
+        
+        // Reset the key from zero
+        $zips = array_values($zips);
+
+        // Generate zip data
+        $zips = array_map(function($zipFileName){
+            $zip = [];
+            $zip['fileName'] = $zipFileName;
+            
+            $zip_path = \WP2Static\SiteInfo::getPath( 'uploads' ) . $zipFileName;
+            $zip['zip_path'] = is_file( $zip_path ) ? $zip_path : false;
+
+            if ( is_file( $zip_path ) ) {
+                $zip['zip_size'] = filesize( $zip_path );
+                $zip['zip_created'] = gmdate( 'F d Y H:i:s.', (int) filemtime( $zip_path ) );
+            }
+    
+            $zip['zip_url'] =
+                is_file( $zip_path ) ?
+                    \WP2Static\SiteInfo::getUrl( 'uploads' ) . $zipFileName : '#';
+
+        
+            return $zip;
+        }, $zips);
+
+        $view['zips'] = $zips;
+
         $zip_path = \WP2Static\SiteInfo::getPath( 'uploads' ) . 'wp2static-processed-site.zip';
 
         $view['zip_path'] = is_file( $zip_path ) ? $zip_path : false;
@@ -78,13 +112,9 @@ class Controller {
         exit;
     }
 
-    public function generateZip( string $processed_site_path, string $enabled_deployer ) : void {
-        if ( $enabled_deployer !== 'wp2static-addon-zip' ) {
-            return;
-        }
-
+    public function generateZip( string $processed_site_path ) : void {
         $zip_archiver = new ZipArchiver();
-        $zip_archiver->generateArchive( $processed_site_path );
+        $zip_archiver->generateArchive( $processed_site_path);
     }
 
     public static function activate_for_single_site() : void {
@@ -154,6 +184,18 @@ class Controller {
         );
     }
 
+    /**
+     * Add sub menu to WP2Static menu
+     *
+     * @param mixed[] $submenu_pages array of loaded submenu pages
+     * @return mixed[] array of submenu pages
+     */
+    public static function addSubmenuPage( $submenu_pages ) : array {
+        $submenu_pages['zip'] = [ 'WP2StaticZip\Controller', 'renderZipPage' ];
+
+        return $submenu_pages;
+    }
+
     // ensure WP2Static menu is active for addon
     public function setActiveParentMenu() : void {
             global $plugin_page;
@@ -163,4 +205,5 @@ class Controller {
             $plugin_page = 'wp2static-options';
         }
     }
+    
 }

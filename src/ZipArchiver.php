@@ -63,7 +63,7 @@ class ZipArchiver {
 
         $zip_archive->close();
 
-        $zip_path = $processed_site_path . '.zip';
+        $zip_path = $processed_site_path . '-' . time() . '.zip';
 
         rename( $temp_zip, $zip_path );
 
